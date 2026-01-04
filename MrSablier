@@ -1,3 +1,4 @@
+
 # MrSablier – Code Structure Guide
 
 This document explains the repository layout and the responsibilities of each module so you can quickly navigate the codebase.
@@ -247,4 +248,3 @@ Recommended reading order:
 3. `src/update_indexes.rs` (how raw accounts become typed state)
 4. `src/evaluate_and_run_automated_orders.rs` (trigger evaluation)
 5. One handler end-to-end (ex: `handlers/liquidate_long.rs`) + `handlers/create_ixs.rs`
-
