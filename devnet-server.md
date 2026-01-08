@@ -101,6 +101,18 @@ docker logs -f adrena-processor-db
 
 ```
 
+###  initialize the grpc submodule
+Run this from the repo root (the folder that contains .gitmodules and grpc/
+
+```git submodule update --init --recursive```
+
+### If you already have grpc/ but it’s in a weird state, you can also do:
+
+```
+git submodule sync --recursive
+git submodule update --init --recursive
+```
+
 
 
 
