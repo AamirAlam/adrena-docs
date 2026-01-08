@@ -113,7 +113,10 @@ git submodule sync --recursive
 git submodule update --init --recursive
 ```
 
-
+### install 
+```
+npm install --prefix enricher ../grpc/yellowstone-grpc-client-nodejs
+```
 
 
 
