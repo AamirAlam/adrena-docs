@@ -134,3 +134,19 @@ npm run build
 ```
 
 
+### Database ###
+
+#### Source Database (transaction_db) - Port 5432
+Core tables: `pools, tokens, pool_snapshot_info, custody_snapshot_info`
+Aggregated tables: `agg_pool_snapshot_info_hourly/daily, agg_custody_snapshot_info_hourly/daily`
+Price tables: `adx_price, alp_price, assets_price`
+Integration tables: `lp_integrations, agg_lp_integrations_hourly/daily`
+Transaction tables: `raw_transactions, enriched_transactions, catchup_transactions, slots, scanned_catchup_slots`
+
+#### Processor Databases (processor_db & processor_db_two) - Ports 5433 & 5434
+User tables: `users, user_points, user_points_weekly, user_quests, user_referrer_profiles, user_teams`
+Position tables: `positions, position_expanse_points_history`
+Staking tables: `stakes, claims, staking_rounds, staking_rounds_rates, ref_user_staking`
+Game tables: `seasons, week_dates, quests, mutagen_giveaway`
+Supporting tables: `custodies, pools, tokens, transactions, liquidity, lookup_tables, lookup_table_addresses, map_positions_id_onchain`
+
