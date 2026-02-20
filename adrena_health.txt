@@ -1,0 +1,141 @@
+Public stats embed — #protocol-stats channel, edits every 2 minutes                                                                         
+                                                                                                                                            
+  ┌────────────────┬────────────────────────────────────────────────────────────────────────┐                                                 
+  │     Metric     │                                 Source                                 │                                                 
+  ├────────────────┼────────────────────────────────────────────────────────────────────────┤                                                 
+  │ ADX price      │ Jupiter API + Switchboard crossbar (takes lower, warns if >10% spread) │                                                 
+  ├────────────────┼────────────────────────────────────────────────────────────────────────┤
+  │ ALP price      │ On-chain Pool account                                                  │
+  ├────────────────┼────────────────────────────────────────────────────────────────────────┤
+  │ AUM            │ On-chain Pool account                                                  │
+  ├────────────────┼────────────────────────────────────────────────────────────────────────┤
+  │ 24h Volume     │ On-chain cumulative volume via rolling snapshots (720 entries)         │
+  ├────────────────┼────────────────────────────────────────────────────────────────────────┤
+  │ Open Interest  │ On-chain Custody accounts (long + short summed)                        │
+  ├────────────────┼────────────────────────────────────────────────────────────────────────┤
+  │ L/S Ratio      │ Derived from OI longs vs shorts                                        │
+  ├────────────────┼────────────────────────────────────────────────────────────────────────┤
+  │ Total Traders  │ On-chain Cortex account (userProfilesCount)                            │
+  ├────────────────┼────────────────────────────────────────────────────────────────────────┤
+  │ Open Positions │ On-chain Custody accounts (long + short positions summed)              │
+  └────────────────┴────────────────────────────────────────────────────────────────────────┘
+
+  ---
+  Health alerts — private channel, checks every 60 seconds
+
+  ┌────────────────────────────────┬───────────────────┐
+  │            Endpoint            │       Auth        │
+  ├────────────────────────────────┼───────────────────┤
+  │ Primary RPC — Triton           │ RPC_PRIMARY_KEY   │
+  ├────────────────────────────────┼───────────────────┤
+  │ Secondary RPC — rpcpool        │ RPC_SECONDARY_KEY │
+  ├────────────────────────────────┼───────────────────┤
+  │ Data API — datapi.adrena.trade │ DATA_API_KEY      │
+  ├────────────────────────────────┼───────────────────┤
+  │ Autonom Oracle                 │ AUTONOM_API_KEY   │
+  ├────────────────────────────────┼───────────────────┤
+  │ ChaosLabs Oracle               │ CHAOS_LABS_API    │
+  ├────────────────────────────────┼───────────────────┤
+  │ Adrena Crossbar (SG)           │ none              │
+  ├────────────────────────────────┼───────────────────┤
+  │ Switchboard Crossbar (Public)  │ none              │
+  ├────────────────────────────────┼───────────────────┤
+  │ Jito Block Engine              │ none              │
+  └────────────────────────────────┴───────────────────┘
+
+  Fires red embed on DOWN, green on recovery. Pings ALERT_ROLE_ID on DOWN.
+
+  ---
+  Wallet watch — same private channel, polls every 5 seconds
+
+  ┌───────────────────────┬───────────┬─────────┐
+  │        Keeper         │  Address  │ Min SOL │
+  ├───────────────────────┼───────────┼─────────┤
+  │ MrSablier (Pool)      │ 3coR…bcNH │ 0.5     │
+  ├───────────────────────┼───────────┼─────────┤
+  │ MrSablier (Dedicated) │ AXAn…Qsrn │ 0.5     │
+  ├───────────────────────┼───────────┼─────────┤
+  │ MrSablier Staking     │ AnLD…hrQ  │ 0.5     │
+  ├───────────────────────┼───────────┼─────────┤
+  │ Achievements          │ 4z2w…FqE  │ 0.2     │
+  ├───────────────────────┼───────────┼─────────┤
+  │ MrRewards             │ MrR7…JJM  │ 0.2     │
+  ├───────────────────────┼───────────┼─────────┤
+  │ OraclePrices          │ EbiV…tma  │ 0.5     │
+  ├───────────────────────┼───────────┼─────────┤
+  │ BorrowFees            │ Dy9W…YDc  │ 0.2     │
+  └───────────────────────┴───────────┴─────────┘
+
+  Fires red embed on first drop below threshold, green on recovery. Anti-spam — no repeat alerts until balance recovers.
+
+
+﻿
+Public stats embed — #protocol-stats channel, edits every 2 minutes                                                                         
+                                                                                                                                            
+  ┌────────────────┬────────────────────────────────────────────────────────────────────────┐                                                 
+  │     Metric     │                                 Source                                 │                                                 
+  ├────────────────┼────────────────────────────────────────────────────────────────────────┤                                                 
+  │ ADX price      │ Jupiter API + Switchboard crossbar (takes lower, warns if >10% spread) │                                                 
+  ├────────────────┼────────────────────────────────────────────────────────────────────────┤
+  │ ALP price      │ On-chain Pool account                                                  │
+  ├────────────────┼────────────────────────────────────────────────────────────────────────┤
+  │ AUM            │ On-chain Pool account                                                  │
+  ├────────────────┼────────────────────────────────────────────────────────────────────────┤
+  │ 24h Volume     │ On-chain cumulative volume via rolling snapshots (720 entries)         │
+  ├────────────────┼────────────────────────────────────────────────────────────────────────┤
+  │ Open Interest  │ On-chain Custody accounts (long + short summed)                        │
+  ├────────────────┼────────────────────────────────────────────────────────────────────────┤
+  │ L/S Ratio      │ Derived from OI longs vs shorts                                        │
+  ├────────────────┼────────────────────────────────────────────────────────────────────────┤
+  │ Total Traders  │ On-chain Cortex account (userProfilesCount)                            │
+  ├────────────────┼────────────────────────────────────────────────────────────────────────┤
+  │ Open Positions │ On-chain Custody accounts (long + short positions summed)              │
+  └────────────────┴────────────────────────────────────────────────────────────────────────┘
+
+  ---
+  Health alerts — private channel, checks every 60 seconds
+
+  ┌────────────────────────────────┬───────────────────┐
+  │            Endpoint            │       Auth        │
+  ├────────────────────────────────┼───────────────────┤
+  │ Primary RPC — Triton           │ RPC_PRIMARY_KEY   │
+  ├────────────────────────────────┼───────────────────┤
+  │ Secondary RPC — rpcpool        │ RPC_SECONDARY_KEY │
+  ├────────────────────────────────┼───────────────────┤
+  │ Data API — datapi.adrena.trade │ DATA_API_KEY      │
+  ├────────────────────────────────┼───────────────────┤
+  │ Autonom Oracle                 │ AUTONOM_API_KEY   │
+  ├────────────────────────────────┼───────────────────┤
+  │ ChaosLabs Oracle               │ CHAOS_LABS_API    │
+  ├────────────────────────────────┼───────────────────┤
+  │ Adrena Crossbar (SG)           │ none              │
+  ├────────────────────────────────┼───────────────────┤
+  │ Switchboard Crossbar (Public)  │ none              │
+  ├────────────────────────────────┼───────────────────┤
+  │ Jito Block Engine              │ none              │
+  └────────────────────────────────┴───────────────────┘
+
+  Fires red embed on DOWN, green on recovery. Pings ALERT_ROLE_ID on DOWN.
+
+  ---
+  Wallet watch — same private channel, polls every 5 seconds
+
+  ┌───────────────────────┬───────────┬─────────┐
+  │        Keeper         │  Address  │ Min SOL │
+  ├───────────────────────┼───────────┼─────────┤
+  │ MrSablier (Pool)      │ 3coR…bcNH │ 0.5     │
+  ├───────────────────────┼───────────┼─────────┤
+  │ MrSablier (Dedicated) │ AXAn…Qsrn │ 0.5     │
+  ├───────────────────────┼───────────┼─────────┤
+  │ MrSablier Staking     │ AnLD…hrQ  │ 0.5     │
+  ├───────────────────────┼───────────┼─────────┤
+  │ Achievements          │ 4z2w…FqE  │ 0.2     │
+  ├───────────────────────┼───────────┼─────────┤
+  │ MrRewards             │ MrR7…JJM  │ 0.2     │
+  ├───────────────────────┼───────────┼─────────┤
+  │ OraclePrices          │ EbiV…tma  │ 0.5     │
+  ├───────────────────────┼───────────┼─────────┤
+  │ BorrowFees            │ Dy9W…YDc  │ 0.2     │
+  └───────────────────────┴───────────┴─────────┘
+
+  Fires red embed on first drop below threshold, green on recovery. Anti-spam — no repeat alerts until balance recovers.
