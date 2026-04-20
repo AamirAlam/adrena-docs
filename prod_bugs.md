@@ -163,4 +163,33 @@
   │ 10  │ HIGH     │ ingestor  │ dbclient.ts:28–35 — keep-alive no reconnect                                  │ ⚠️ Partial — now calls process.exit(1) on     │
   │     │          │           │                                                                              │ failure, interval cleared                     │
   └─────┴──────────┴───────────┴──────────────────────────────────────────────────────────────────────────────┴───────────────────────────────────────────────┘
+
+ ---
+  adrena-abi release/39 — Sync Status
+
+  Pin Status — All Services ✅ Fully Synced
+
+  All 8 consumers are pinned to the current HEAD b885386:
+
+  ┌─────────────────────────┬─────────┬───────┐
+  │         Service         │   Pin   │ Match │
+  ├─────────────────────────┼─────────┼───────┤
+  │ adrena-data / processor │ b885386 │ ✅    │
+  ├─────────────────────────┼─────────┼───────┤
+  │ adrena-data / api       │ b885386 │ ✅    │
+  ├─────────────────────────┼─────────┼───────┤
+  │ adrena-data / cron      │ b885386 │ ✅    │
+  ├─────────────────────────┼─────────┼───────┤
+  │ adrena-data / enricher  │ b885386 │ ✅    │
+  ├─────────────────────────┼─────────┼───────┤
+  │ mrAutonom               │ b885386 │ ✅    │
+  ├─────────────────────────┼─────────┼───────┤
+  │ mrOracle                │ b885386 │ ✅    │
+  ├─────────────────────────┼─────────┼───────┤
+  │ mrSablier               │ b885386 │ ✅    │
+  ├─────────────────────────┼─────────┼───────┤
+  │ mrSablierStaking        │ b885386 │ ✅    │
+  └─────────────────────────┴─────────┴───────┘
+
+  The enricher staleness issue flagged in the original audit is resolved — it's now on HEAD along with everyone else.
 ```
