@@ -274,7 +274,7 @@ Apache License 2.0 - see LICENSE file for details.
 
 **Note**: This service is designed for mainnet financial operations. Ensure proper testing, monitoring, and security measures before production deployment.
 
-### Latest prod code review 
+# Latest prod code review 
 
 ```
 mrSablierStaking Re-Review — commit cdbd77c "Suggested changes"
