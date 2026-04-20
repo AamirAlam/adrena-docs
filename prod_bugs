@@ -1,0 +1,72 @@
+### mrSablierStaking
+
+`
+ mrSablierStaking Re-Review — commit cdbd77c "Suggested changes"
+
+  ---
+  Fixed ✅
+
+  ┌─────┬────────────────────────────────────────────────────────────────────┬─────────────────────────────────────────────────────────────────────────┐
+  │  #  │                               Issue                                │                                 Status                                  │
+  ├─────┼────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────┤
+  │ 2   │ TOCTOU .expect() on account cache in process_claim_stakes          │ FIXED — now uses match with graceful eviction                           │
+  ├─────┼────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────┤
+  │ 3   │ Missing locked stake not cleaned from finalize_locked_stakes_cache │ FIXED — full refactor with explicit stale_entries tracking and eviction │
+  ├─────┼────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────┤
+  │ 4   │ .expect() on DB pubkey deserialization (get_owner_pubkey)          │ FIXED — now logs + returns Ok(None) on corrupt row                      │
+  ├─────┼────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────┤
+  │ 9   │ Unbounded simulation retry loop in claim_stake.rs                  │ FIXED — all error types now capped at MAX_SIMULATION_ATTEMPTS = 50      │
+  ├─────┼────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────┤
+  │ 10  │ println! left in production                                        │ FIXED — converted to log::debug!()                                      │
+  ├─────┼────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────┤
+  │ Log │ "50th percentile" wrong label in log                               │ FIXED — corrected to "35th pct"                                         │
+  └─────┴────────────────────────────────────────────────────────────────────┴─────────────────────────────────────────────────────────────────────────┘
+
+  ---
+  Still Present ❌
+
+  1. client.rs:675–696 — Resolution errors silently swallowed ❌ CRITICAL
+
+  if let Err(e) = handlers::resolve_staking_round::resolve_staking_round(...).await {
+      log::error!("Error resolving staking round: {}", e);
+      // still returns Ok(()) — no cache update, no backoff
+  }
+  Unchanged. Failed rounds retry every 1s with no backoff and no signal upstream.
+
+  2. resolve_staking_round.rs:78, finalize_locked_stake.rs:170 — No TX confirmation wait ❌ HIGH
+
+  // TODO wait for confirmation and retry if needed
+  Ok(())
+  Both TODOs still present. Submitted TXs that are dropped go completely undetected.
+
+  3. client.rs:791–805 — Successful claim cache relies on gRPC stream ❌ HIGH
+
+  ClaimStakeOutcome::Success still does nothing synchronously — duplicate claim risk on stream delay.
+
+  4. client.rs:418–422 — No pagination on initial UserStaking fetch ❌ HIGH
+
+  program.accounts::<UserStaking>(vec![]) — still no pagination, silent partial result possible at scale.
+
+  5. process_stream_message.rs:68, 81, 172, 175 — Explicit panic! on unexpected stream states ❌ MEDIUM
+
+  All four panic!() calls unchanged.
+
+  6. process_stream_message.rs:52–53 — .expect() on gRPC fields ❌ MEDIUM
+
+  let account = sua.account.expect("Account should be defined");
+  Unchanged.
+
+  7. client.rs:278 — .unwrap() on keypair file read ❌ MEDIUM
+
+  Unchanged.
+
+  8. claim_stake.rs:182 — CU overflow * 1.20 as u32 ⚠️ MITIGATED
+
+  The 1M CU cap at line 134 makes actual overflow unlikely in practice, but the unsafe cast remains.
+
+  ---
+  Summary
+
+  6 of 14 issues fixed. The commit correctly addressed all 4 critical cache/panic bugs in client.rs and the two low/medium claim_stake.rs issues. The remaining
+  open items are the TX confirmation TODOs (#3, #4 handlers), the silent error swallowing in the resolve loop (#1), and the stream handler panics.
+  `
