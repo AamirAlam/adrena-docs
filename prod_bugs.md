@@ -2,194 +2,89 @@
 
 ```
  ---
-  mrSablier — 38a4d0b
+ Remaining Bugs (verified by reading source)
 
-  ┌─────┬──────────┬────────────────────────────────────────────────────────────────────────────────────┬─────────────────────────────────────────────────────┐
-  │  #  │ Severity │                                       Issue                                        │                       Status                        │
-  ├─────┼──────────┼────────────────────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────┤
-  │ 1   │ CRITICAL │ oracle_onchain_fallback.rs:54–67 — bounds check after slice, .unwrap() panics on   │ ❌ Still Present                                    │
-  │     │          │ truncated RPC                                                                      │                                                     │
-  ├─────┼──────────┼────────────────────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────┤
-  │ 2   │ CRITICAL │ process_stream_message.rs:116–119 — explicit panic! on stream filter states        │ ❌ Still Present                                    │
-  ├─────┼──────────┼────────────────────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────┤
-  │ 3   │ CRITICAL │ handlers/liquidate_short.rs:63 — hardcoded mock USDC price for all short           │ ❌ Still Present                                    │
-  │     │          │ collateral                                                                         │                                                     │
-  ├─────┼──────────┼────────────────────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────┤
-  │ 4   │ CRITICAL │ process_stream_message.rs:79–87 — no owner validation on fetched custody           │ ✅ Fixed — get_account() now validates owner ==     │
-  │     │          │                                                                                    │ adrena_abi::ID                                      │
-  ├─────┼──────────┼────────────────────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────┤
-  │ 5   │ HIGH     │ transaction_wrapper.rs:62–67 — limit order zeroed (default()) not removed          │ ❌ Still Present                                    │
-  ├─────┼──────────┼────────────────────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────┤
-  │ 6   │ HIGH     │ transaction_wrapper.rs:55–59 — race condition in position cleanup                  │ ❌ Still Present                                    │
-  ├─────┼──────────┼────────────────────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────┤
-  │ 7   │ HIGH     │ handlers/liquidate_long.rs:338–349 — priority fee tier threshold scale mismatch    │ ❌ Still Present                                    │
-  ├─────┼──────────┼────────────────────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────┤
-  │ 8   │ HIGH     │ rpc_fallback.rs — stale blockhash reused across RPC fallback retries               │ ✅ Fixed — blockhash fetched per endpoint           │
-  ├─────┼──────────┼────────────────────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────┤
-  │ 9   │ HIGH     │ api/oracle_batch_prices.rs:109–111 — silent timestamp parse failure returns 0      │ ✅ Fixed — now logs with full context               │
-  ├─────┼──────────┼────────────────────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────┤
-  │ 10  │ MEDIUM   │ rpc_fallback.rs — 1.5s confirmation window too short                               │ ⚠️ Partial — bumped to 2.0s (still short)           │
-  ├─────┼──────────┼────────────────────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────┤
-  │ 11  │ MEDIUM   │ jito_bundle.rs:93, 181 — .unwrap() on system time and tx serialization             │ ❌ Still Present                                    │
-  ├─────┼──────────┼────────────────────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────┤
-  │ 12  │ MEDIUM   │ handlers/common.rs:379–396 — no backoff on oracle retry signal                     │ ❌ Still Present                                    │
-  ├─────┼──────────┼────────────────────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────┤
-  │ 13  │ MEDIUM   │ evaluate_and_run_automated_orders.rs:86–87 — silent custody name mismatch          │ ❌ Still Present                                    │
-  └─────┴──────────┴────────────────────────────────────────────────────────────────────────────────────┴─────────────────────────────────────────────────────┘
+ 🔴 DEFINITELY HAPPENS
 
-  ---
-  mrOracle — 0e52a2f
+ 1. mrSablierStaking — resolve error silently continues
+ - src/client.rs:685-696 (read directly)
+ if let Err(e) = handlers::resolve_staking_round::resolve_staking_round(...).await {
+     log::error!("Error resolving staking round: {}", e);
+     // cache never updated, Ok(()) returned — same round retried every 1 second
+ }
+ - process_resolve_staking_rounds is called on every tick; on persistent failure, infinite 1-per-second TX spam loop
+ - Fix: on error path, still advance next_resolve_time in cache (or add per-key backoff) to avoid retry storm
 
-  ┌─────┬──────────┬──────────────────────────────────────────────────────────────────────────────────────┬───────────────────────────────────────────────────┐
-  │  #  │ Severity │                                        Issue                                         │                      Status                       │
-  ├─────┼──────────┼──────────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────┤
-  │ 1   │ CRITICAL │ get_oracle_batch.rs:145 + chaoslabs.rs:134 + autonom.rs:129 — exponent field fetched │ ❌ Still Present                                  │
-  │     │          │  but never applied                                                                   │                                                   │
-  ├─────┼──────────┼──────────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────┤
-  │ 2   │ CRITICAL │ priority_fees.rs:88 — integer division precision loss on small fee lists             │ ✅ Fixed — now uses float interpolation           │
-  ├─────┼──────────┼──────────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────┤
-  │ 3   │ HIGH     │ pool_config.rs:301–353 — hardcoded Pool struct byte offsets                          │ ⚠️ Partial — account size validation added as     │
-  │     │          │                                                                                      │ drift detector                                    │
-  ├─────┼──────────┼──────────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────┤
-  │ 4   │ HIGH     │ pool_config.rs:318, 367 — .unwrap() on slice conversion in custody validation        │ ❌ Still Present (bounds checked before, low      │
-  │     │          │                                                                                      │ runtime risk)                                     │
-  ├─────┼──────────┼──────────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────┤
-  │ 5   │ HIGH     │ switchboard.rs:355–366 — instruction_idx optional, layout drift undetected           │ ⚠️ Partial — now warns on None, still not         │
-  │     │          │                                                                                      │ required                                          │
-  ├─────┼──────────┼──────────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────┤
-  │ 6   │ MEDIUM   │ update_pool_aum.rs:135–137 — skip_preflight + max_retries=0                          │ ❌ Still Present                                  │
-  ├─────┼──────────┼──────────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────┤
-  │ 7   │ MEDIUM   │ chaoslabs.rs:90, autonom.rs:89 — future-dated batch rejection sign inversion         │ ❌ Still Present                                  │
-  ├─────┼──────────┼──────────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────┤
-  │ 8   │ MEDIUM   │ Inconsistent empty-batch handling across providers                                   │ ❌ Still Present                                  │
-  ├─────┼──────────┼──────────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────┤
-  │ 9   │ MEDIUM   │ pool_config.rs:318–320 — zero-pubkey silently excluded from custody count            │ ❌ Still Present                                  │
-  └─────┴──────────┴──────────────────────────────────────────────────────────────────────────────────────┴───────────────────────────────────────────────────┘
+ 2. mrSablierStaking — TX sent with no confirmation wait
+ - src/handlers/resolve_staking_round.rs:78-80 (read directly)
+ // TODO wait for confirmation and retry if needed
+ Ok(())
+ - TX is sent, signature logged, function returns Ok(()) immediately — no await on confirmation
+ - Combined with bug #1: if TX lands but takes >1s, the same round gets retried on next tick
+ - Fix: confirm TX signature before updating cache / returning success
 
-  ---
-  mrAutonom — 2d5d291
+ 🟠 HIGH PROBABILITY ON RECONNECT (70-85%)
 
-  ┌─────┬──────────┬──────────────────────────────────────────────────────────────────┬────────────────────────────────────────────────────────────────────────┐
-  │  #  │ Severity │                              Issue                               │                                 Status                                 │
-  ├─────┼──────────┼──────────────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
-  │ 1   │ CRITICAL │ index.ts:674 — DRY_RUN state bleeds into live dedup tracking     │ ✅ Fixed — .set() moved inside else block                              │
-  ├─────┼──────────┼──────────────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
-  │ 2   │ CRITICAL │ index.ts:403–409 — hexToBytes() silently corrupts signatures     │ ✅ Fixed — strips 0x, validates even length and hex chars              │
-  ├─────┼──────────┼──────────────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
-  │ 3   │ CRITICAL │ rpc-fallback.ts — stale blockhash reused across fallback retries │ ✅ Fixed — already correct per-endpoint design confirmed               │
-  ├─────┼──────────┼──────────────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
-  │ 4   │ CRITICAL │ rpc-fallback.ts:10–11 — 1.5s confirmation window too short       │ ✅ Fixed — extended to 5s (CONFIRM_POLLS=10)                           │
-  ├─────┼──────────┼──────────────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
-  │ 5   │ HIGH     │ index.ts:612–670 — syntheticCustodies stale by submission time   │ ❌ Still Present                                                       │
-  ├─────┼──────────┼──────────────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
-  │ 6   │ HIGH     │ index.ts:454–460 — no feed↔custody index alignment validation    │ ❌ Still Present                                                       │
-  ├─────┼──────────┼──────────────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
-  │ 7   │ HIGH     │ index.ts:444–445 — unsafe number↔BN timestamp, no range check    │ ✅ Fixed — validateStrictResponse() checks type, integer, non-negative │
-  ├─────┼──────────┼──────────────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
-  │ 8   │ HIGH     │ index.ts:220–231 — partial feed drop logged at console.log       │ ❌ Still Present (style issue)                                         │
-  ├─────┼──────────┼──────────────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
-  │ 9   │ MEDIUM   │ index.ts:77–79 — parseInt() NaN unhandled                        │ ❌ Still Present                                                       │
-  ├─────┼──────────┼──────────────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
-  │ 10  │ MEDIUM   │ index.ts:511–513 — keypair loading throws cryptic errors         │ ❌ Still Present                                                       │
-  ├─────┼──────────┼──────────────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
-  │ 11  │ MEDIUM   │ rpc-fallback.ts:91 — res.value[0] unguarded on empty array       │ ✅ Fixed — implicit truthiness guard                                   │
-  └─────┴──────────┴──────────────────────────────────────────────────────────────────┴────────────────────────────────────────────────────────────────────────┘
+ 3. mrSablier — panic on stream reconnect
+ - src/process_stream_message.rs:115-119 (read directly)
+ } else if msg.filters.contains(&"positions_close".to_owned()) {
+     match update {
+         PositionUpdate::Created(_) => { panic!("New position created in positions_close filter"); }
+         PositionUpdate::Modified(_) => { panic!("New position created in positions_close filter"); }
+ - gRPC reconnects can replay Created events; positions_close filter uses account whitelist but Yellowstone can still emit Created on reconnect
+ - Fix: replace both panic! with log::warn!(...) and continue (or return Ok(()))
 
-  ---
-  mrSablierStaking — cdbd77c
+ 4. mrSablierStaking — panic on stream reconnect
+ - src/process_stream_message.rs:68,81 (read directly)
+ StakingAccountUpdate::Created(_) => {
+     panic!("Staking account created in staking_create_update filter");
+ }
+ StakingAccountUpdate::Closed => {
+     panic!("Staking account closed in staking_create_update filter");
+ }
+ - Same replay-on-reconnect risk
+ - Fix: same — replace both panic! with log::warn! + graceful return
 
-  ┌─────┬──────────┬─────────────────────────────────────────────────────────────────────────────────┬───────────────────────────────────────────────────────┐
-  │  #  │ Severity │                                      Issue                                      │                        Status                         │
-  ├─────┼──────────┼─────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────┤
-  │ 1   │ CRITICAL │ client.rs:675–696 — resolution errors swallowed, always returns Ok(())          │ ❌ Still Present                                      │
-  ├─────┼──────────┼─────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────┤
-  │ 2   │ CRITICAL │ client.rs:715, 816, 838 — TOCTOU .expect() on account cache lookups             │ ✅ Fixed — replaced with match + graceful eviction    │
-  ├─────┼──────────┼─────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────┤
-  │ 3   │ CRITICAL │ client.rs:810–824 — missing locked stake not cleaned from finalize cache        │ ✅ Fixed — explicit stale_entries tracking + eviction │
-  ├─────┼──────────┼─────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────┤
-  │ 4   │ CRITICAL │ client.rs:889 — .expect() on DB pubkey deserialization                          │ ✅ Fixed — now logs + returns Ok(None) on corrupt row │
-  ├─────┼──────────┼─────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────┤
-  │ 5   │ HIGH     │ resolve_staking_round.rs:78 — TODO: no TX confirmation wait                     │ ❌ Still Present                                      │
-  ├─────┼──────────┼─────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────┤
-  │ 6   │ HIGH     │ finalize_locked_stake.rs:170 — TODO: no TX confirmation wait                    │ ❌ Still Present                                      │
-  ├─────┼──────────┼─────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────┤
-  │ 7   │ HIGH     │ client.rs:764–766 — successful claim cache relies on gRPC stream                │ ❌ Still Present                                      │
-  ├─────┼──────────┼─────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────┤
-  │ 8   │ HIGH     │ client.rs:418–422 — no pagination on initial UserStaking fetch                  │ ❌ Still Present                                      │
-  ├─────┼──────────┼─────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────┤
-  │ 9   │ MEDIUM   │ process_stream_message.rs:68, 81, 172, 175 — panic! on unexpected stream states │ ❌ Still Present                                      │
-  ├─────┼──────────┼─────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────┤
-  │ 10  │ MEDIUM   │ process_stream_message.rs:52–53 — .expect() on gRPC message fields              │ ❌ Still Present                                      │
-  ├─────┼──────────┼─────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────┤
-  │ 11  │ MEDIUM   │ client.rs:278 — .unwrap() on keypair file read                                  │ ❌ Still Present                                      │
-  ├─────┼──────────┼─────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────┤
-  │ 12  │ MEDIUM   │ claim_stake.rs:182 — CU * 1.20 as u32 overflow risk                             │ ⚠️ Mitigated (1M CU cap in place)                     │
-  ├─────┼──────────┼─────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────┤
-  │ 13  │ MEDIUM   │ claim_stake.rs:96–114 — unbounded simulation retry loop                         │ ✅ Fixed — all errors capped at 50 attempts           │
-  ├─────┼──────────┼─────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────┤
-  │ 14  │ LOW      │ claim_stake.rs:146 — println! in production                                     │ ✅ Fixed — converted to log::debug!()                 │
-  └─────┴──────────┴─────────────────────────────────────────────────────────────────────────────────┴───────────────────────────────────────────────────────┘
+ 🟡 PLAUSIBLE (IDL mismatch / catchup replay)
 
-  ---
-  adrena-data — 58ab249
+ 5. adrena-data processor — eventData null dereference
+ - processor/src/parse/position/parseAdditionalInfosPosition.ts:197-200 (read directly)
+ // eventData comes from getEventData(...) which CAN return null
+ // Lines 163-183 correctly guard with: if (eventData && ...)
+ // But line 197 has NO guard:
+ additionalInfos.size = nativeToUi(eventData.sizeUsd, 6);
+ additionalInfos.collateralAmount = nativeToUi(eventData.collateralAmountUsd, 6);
+ // Then line 208 correctly guards again: if (eventData && typeof eventData.poolType...)
+ - eventData is null when the event is missing from the transaction (IDL mismatch, old catchup txns)
+ - TypeError: "Cannot read properties of null" — drops the whole instruction parse for that TX
+ - Fix: wrap lines 197-201 in if (eventData) { ... } to match the guard pattern used on lines 163-210
 
-  ┌─────┬──────────┬───────────┬──────────────────────────────────────────────────────────────────────────────┬───────────────────────────────────────────────┐
-  │  #  │ Severity │  Service  │                                    Issue                                     │                    Status                     │
-  ├─────┼──────────┼───────────┼──────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────┤
-  │ 1   │ CRITICAL │ processor │ parseAdditionalInfosPosition.ts:328 — wrong leverage divisor /1000           │ ✅ Fixed — all leverage calcs now use /10000  │
-  ├─────┼──────────┼───────────┼──────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────┤
-  │ 2   │ CRITICAL │ processor │ parseAdditionalInfosPosition.ts — eventData null pointer dereferences across │ ❌ Still Present                              │
-  │     │          │           │  all event types                                                             │                                               │
-  ├─────┼──────────┼───────────┼──────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────┤
-  │ 3   │ CRITICAL │ cron      │ processAssetsPrice.ts:287–297 — ChaosLabs feed ID key mismatch               │ ❌ Still Present                              │
-  │     │          │           │ (byAdrenaFeedId vs chaoslabs ID)                                             │                                               │
-  ├─────┼──────────┼───────────┼──────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────┤
-  │ 4   │ CRITICAL │ cron      │ processSwitchboardAssetPrices.ts:306 — BigInt() crash on scientific notation │ ✅ Fixed — .toString() now produces decimal   │
-  │     │          │           │                                                                              │ string                                        │
-  ├─────┼──────────┼───────────┼──────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────┤
-  │ 5   │ CRITICAL │ enricher  │ parseWeb3SolanaTxAndInsertRawTransactions.ts:239 — async forEach commits     │ ✅ Fixed — replaced with for...of with proper │
-  │     │          │           │ before ops complete                                                          │  awaits                                       │
-  ├─────┼──────────┼───────────┼──────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────┤
-  │ 6   │ CRITICAL │ ingestor  │ stream.ts:117 — processStreamingData() not awaited, unhandled rejection      │ ✅ Fixed — .catch() handler added             │
-  ├─────┼──────────┼───────────┼──────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────┤
-  │ 7   │ HIGH     │ cron      │ processAutonomAssetPrices.ts:124–130 — infinite loop on Infinity timestamp   │ ❌ Still Present                              │
-  ├─────┼──────────┼───────────┼──────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────┤
-  │ 8   │ HIGH     │ cron      │ AdxPrice.ts:10, AlpPrice.ts:10 — silent error swallow, wrong message         │ ✅ Fixed — correct messages, errors now       │
-  │     │          │           │                                                                              │ rethrown                                      │
-  ├─────┼──────────┼───────────┼──────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────┤
-  │ 9   │ HIGH     │ ingestor  │ processStreamingData.ts:61–69 — dead catch block                             │ ✅ Fixed — catch correctly handles real DB    │
-  │     │          │           │                                                                              │ faults                                        │
-  ├─────┼──────────┼───────────┼──────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────┤
-  │ 10  │ HIGH     │ ingestor  │ dbclient.ts:28–35 — keep-alive no reconnect                                  │ ⚠️ Partial — now calls process.exit(1) on     │
-  │     │          │           │                                                                              │ failure, interval cleared                     │
-  └─────┴──────────┴───────────┴──────────────────────────────────────────────────────────────────────────────┴───────────────────────────────────────────────┘
+ 🟢 WASTEFUL / EDGE CASE
+
+ 6. mrSablier — fee tier thresholds extremely low
+ - src/handlers/liquidate_long.rs:341-365 (read directly)
+ const MAX_FEE_CALC_SIZE: u64 = 2_500_000_000000; // $2.5M cap (at 1e6 scale)
+ loss if loss > 2_500_000000 => ultra,  // $2,500 at 1e6 scale (was probably intended ~$250k)
+ loss if loss > 500_000000  => high,    // $500 at 1e6 scale (was probably intended ~$50k)
+ - Effect: nearly every liquidation with any unrealized loss gets ultra priority fee → service overpays fees, not correctness failure
+ - Fix: clarify intended thresholds with team, then correct multipliers
+
+ 7. adrena-data cron — Infinity timestamp infinite loop
+ - cron/process/processAutonomAssetPrices.ts:124-130
+ while (normalized > YEAR_2100_SECONDS) {
+   normalized = Math.floor(normalized / 1000); // Infinity / 1000 = Infinity
+ }
+ - Only triggers on malformed Infinity from Autonom API response
+ - Fix: if (!isFinite(normalized)) throw new Error('invalid timestamp')
 
  ---
-  adrena-abi release/39 — Sync Status
+ Recommended Fix Order
 
-  Pin Status — All Services ✅ Fully Synced
-
-  All 8 consumers are pinned to the current HEAD b885386:
-
-  ┌─────────────────────────┬─────────┬───────┐
-  │         Service         │   Pin   │ Match │
-  ├─────────────────────────┼─────────┼───────┤
-  │ adrena-data / processor │ b885386 │ ✅    │
-  ├─────────────────────────┼─────────┼───────┤
-  │ adrena-data / api       │ b885386 │ ✅    │
-  ├─────────────────────────┼─────────┼───────┤
-  │ adrena-data / cron      │ b885386 │ ✅    │
-  ├─────────────────────────┼─────────┼───────┤
-  │ adrena-data / enricher  │ b885386 │ ✅    │
-  ├─────────────────────────┼─────────┼───────┤
-  │ mrAutonom               │ b885386 │ ✅    │
-  ├─────────────────────────┼─────────┼───────┤
-  │ mrOracle                │ b885386 │ ✅    │
-  ├─────────────────────────┼─────────┼───────┤
-  │ mrSablier               │ b885386 │ ✅    │
-  ├─────────────────────────┼─────────┼───────┤
-  │ mrSablierStaking        │ b885386 │ ✅    │
-  └─────────────────────────┴─────────┴───────┘
-
-  The enricher staleness issue flagged in the original audit is resolved — it's now on HEAD along with everyone else.
+ 1. mrSablierStaking client.rs:685-696 — add backoff/cache-update on resolve failure (DEFINITELY HAPPENS)
+ 2. mrSablier process_stream_message.rs:115-119 — panic! → log::warn! (70-85% on reconnect)
+ 3. mrSablierStaking process_stream_message.rs:68,81 — same (plausible on reconnect)
+ 4. mrSablierStaking resolve_staking_round.rs:78 — await TX confirmation
+ 5. processor parseAdditionalInfosPosition.ts:197-200 — add if (eventData) guard
+ 6. mrSablier liquidate_long.rs thresholds — fix fee tier values (confirm intent first)
+ 7. cron processAutonomAssetPrices.ts — add isFinite check
 ```
