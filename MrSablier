@@ -1,4 +1,3 @@
-
 # MrSablier – Code Structure Guide
 
 This document explains the repository layout and the responsibilities of each module so you can quickly navigate the codebase.
@@ -14,7 +13,7 @@ This document explains the repository layout and the responsibilities of each mo
 
 ## High-level architecture
 
-The process has two main “inputs” and one “output”:
+The process has two main "inputs" and one "output":
 
 - **Input A: Account updates (stream)**
   - Source: Yellowstone gRPC subscription
@@ -56,14 +55,14 @@ MrSablier/
       execute_limit_order_short.rs
     utils/
       mod.rs
-      derive_discriminator.rs (or equivalent discriminator helper)
+      derive_discriminator.rs
 ```
 
 Notes:
 
 - The crate builds a single binary named `mrsablier` (see `Cargo.toml` `[[bin]]`), with entrypoint `src/client.rs`.
 - The repo depends on `adrena-abi` (Git dependency) which provides:
-  - program IDs / PDAs/constants
+  - program IDs / PDAs / constants
   - account types (Borsh/Anchor layouts)
   - instruction argument structs and account metas
 
@@ -101,7 +100,7 @@ This is the main binary:
 
 - **Core event loop**
   - `tokio::select!` between:
-    - periodic “price tick” to evaluate automated orders
+    - periodic "price tick" to evaluate automated orders
     - inbound gRPC stream messages to update indexes
 
 ### Subscription filtering (inside `client.rs`)
@@ -112,7 +111,7 @@ The subscription request is built with account filters that generally include:
 - `memcmp` filter at offset `0` for the Anchor discriminator bytes
 - for some accounts, a `datasize` filter to select a specific version (example: `UserProfile` V2)
 
-Additionally, the code adds per-account “close monitoring” subscriptions for known account pubkeys so it can detect deletions/closures.
+Additionally, the code adds per-account "close monitoring" subscriptions for known account pubkeys so it can detect deletions/closures.
 
 ## Stream processing
 
@@ -138,7 +137,7 @@ Key concept:
 
 Responsibilities:
 
-- On each “price tick”, for each relevant oracle symbol:
+- On each "price tick", for each relevant oracle symbol:
   - find the custody associated with that oracle
   - iterate indexed positions (and limit orders) associated with that custody
   - spawn tasks to evaluate and potentially execute:
@@ -161,7 +160,7 @@ Responsibilities (conceptually):
 
 - Parse raw account data into typed structs from `adrena_abi`.
 - Maintain HashMaps keyed by account `Pubkey`.
-- Provide helper routines to “ensure custodies are present” for positions and orderbooks.
+- Provide helper routines to "ensure custodies are present" for positions and orderbooks.
 
 These functions are called from:
 
@@ -175,7 +174,7 @@ These functions are called from:
 Responsibilities:
 
 - Fetch recent prioritization fees via Solana RPC.
-- Compute a “mean prioritization fee by percentile” used for transaction prioritization.
+- Compute a "mean prioritization fee by percentile" used for transaction prioritization.
 
 The main loop stores these values in a shared `PriorityFees` struct (behind an `Arc<RwLock<...>>`).
 
@@ -216,7 +215,7 @@ They generally:
 
 ### `src/handlers/create_ixs.rs`
 
-A shared helper module responsible for assembling instruction arguments + account metas used by multiple handlers.
+A shared helper module responsible for assembling instruction arguments and account metas used by multiple handlers.
 
 ## Utilities
 
@@ -239,7 +238,7 @@ Common helpers. The most important one conceptually:
     - on stream update: `process_stream_message` → update indexes → maybe update subscription
     - on price tick: `evaluate_and_run_automated_orders` → call handlers → send tx
 
-## Practical “where do I start reading?”
+## Practical "Where do I start reading?"
 
 Recommended reading order:
 
